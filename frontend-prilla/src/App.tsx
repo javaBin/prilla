@@ -1,28 +1,62 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React, {useState} from 'react';
 import './App.css';
+import axios from 'axios';
+import { AcceptGDPR } from './components/AcceptGDPR';
+import { Register } from './components/Register';
+import {FetchInitialData} from './components/DataFetcher';
 
-class App extends Component {
-  render() {
+export interface DeltagerData {
+    alreadyRegistered: boolean;
+    alreadyAcceptedGDPR: boolean;
+}
+
+export interface SpeakerData {
+    alreadyAcceptedGDPR: boolean;
+    hasReceivedGift: boolean;
+}
+
+interface AppProps {
+    qrCode: any; //VAFAN LIGGER I QRKODEN?
+}
+
+export type ParticipantType = 'DELTAGER' | 'SPEAKER' ;
+
+
+function App ({qrCode}: AppProps) {
+    const [hasAcceptedGDPR, setHasAcceptedGDPR] = useState(false);
+
+
+    const submitRegister = async (qrCode: any) => {
+        try {
+            await axios.post('/prilla/deltager/register', qrCode);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
+        <FetchInitialData
+            participantType='DELTAGER' // cast data beroende på participantType
+            qrCode={qrCode}
+            render={(data) => {
+                if((data as DeltagerData).alreadyRegistered || (data as SpeakerData).hasReceivedGift) {
+                    return <div><h1>Deltakkeren er alrede registrert!</h1></div>;
+                }
+                return (
+                    <div className="App">
+                        {hasAcceptedGDPR ?
+                             <Register submitRegister={()=> submitRegister(qrCode)}/>
+                            :  <AcceptGDPR acceptGDPR={() => setHasAcceptedGDPR(true)}/>
+
+                        }
+                    </div>
+                );
+            }}
+
+        />
     );
-  }
+
 }
 
 export default App;
