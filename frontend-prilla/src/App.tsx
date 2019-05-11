@@ -1,66 +1,62 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import './App.css';
-import axios, {AxiosResponse} from 'axios';
+import axios from 'axios';
 import { AcceptGDPR } from './components/AcceptGDPR';
 import { Register } from './components/Register';
+import {FetchInitialData} from './components/DataFetcher';
 
-interface GDPRComponentState {
+export interface DeltagerData {
     alreadyRegistered: boolean;
     alreadyAcceptedGDPR: boolean;
 }
 
-interface AppProps {
-    qrCode: any; //VAFAN ER TYPEN HER?
+export interface SpeakerData {
+    alreadyAcceptedGDPR: boolean;
+    hasReceivedGift: boolean;
 }
 
+interface AppProps {
+    qrCode: any; //VAFAN LIGGER I QRKODEN?
+}
 
-const initState: GDPRComponentState = {alreadyRegistered : false, alreadyAcceptedGDPR: false};
+export type ParticipantType = 'DELTAGER' | 'SPEAKER' ;
 
 
 function App ({qrCode}: AppProps) {
-    const [gdprState, setGDPRState] = useState<GDPRComponentState>(initState);
-    const [isLoading, setIsLoanding] = useState(true);
     const [hasAcceptedGDPR, setHasAcceptedGDPR] = useState(false);
 
-    const postDataQRCodeData = async (qrCode: any) => {
-        try {
-            const response: AxiosResponse<GDPRComponentState> =  await axios.post('/prilla/deltager', qrCode);
-            setGDPRState(response.data);
-            setIsLoanding(false);
-        }
-        catch (e) {
-            console.log(e);
-        }
-    };
 
     const submitRegister = async (qrCode: any) => {
         try {
-            await axios.post('/prilla/deltager/registrer', qrCode);
+            await axios.post('/prilla/deltager/register', qrCode);
         }
         catch (e) {
             console.log(e);
         }
     };
 
-    useEffect(()=> {postDataQRCodeData(qrCode)}, [qrCode]);
-
-    if(isLoading){
-        return <div/> //TODO SPINNER??
-    }
-
-    if(gdprState.alreadyRegistered) {
-        return <div><h1>Deltakkeren er alrede registrert!</h1></div>;
-    }
-
-    //KAN MAN VARA REGISTRERT OG IKKE ACCEPTERT GDPR??? I SÅFALL MER LOGIKK HER DÅ
-
     return (
-        <div className="App">
-            {hasAcceptedGDPR ?
-                <AcceptGDPR acceptGDPR={() => setHasAcceptedGDPR(true)}/>
-                : <Register submitRegister={()=> submitRegister(qrCode)}/>}
-        </div>
+        <FetchInitialData
+            participantType='DELTAGER' // cast data beroende på participantType
+            qrCode={qrCode}
+            render={(data) => {
+                if((data as DeltagerData).alreadyRegistered || (data as SpeakerData).hasReceivedGift) {
+                    return <div><h1>Deltakkeren er alrede registrert!</h1></div>;
+                }
+                return (
+                    <div className="App">
+                        {hasAcceptedGDPR ?
+                             <Register submitRegister={()=> submitRegister(qrCode)}/>
+                            :  <AcceptGDPR acceptGDPR={() => setHasAcceptedGDPR(true)}/>
+
+                        }
+                    </div>
+                );
+            }}
+
+        />
     );
+
 }
 
 export default App;

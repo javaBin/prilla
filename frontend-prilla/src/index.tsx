@@ -4,7 +4,11 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-let qrCode = {};
+let qrCode = '';
+
+if (process.env.NODE_ENV === 'development') {
+    require('./mock/index');
+}
 
 ReactDOM.render(<App qrCode={qrCode}/>, document.getElementById('root'));
 
