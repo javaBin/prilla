@@ -7,7 +7,7 @@ import * as serviceWorker from './serviceWorker';
 let qrCode = '';
 
 if (process.env.NODE_ENV === 'development') {
-    require('./mock/index');
+    require('./mock/index.ts');
 }
 
 ReactDOM.render(<App qrCode={qrCode}/>, document.getElementById('root'));
